@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  DOER
+  BOTH
+  ADMIN
+}
+
+enum VerificationType {
+  IDENTITY
+  WORK_PERMIT
+  STUDENT_ENROLLMENT
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum TaskStatus {
+  DRAFT
+  OPEN
+  OFFERED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  APPROVED
+  PAID
+  CANCELLED
+  DISPUTED
+}
+
+enum OfferStatus {
+  PENDING
+  COUNTERED
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+enum PaymentStatus {
+  REQUIRES_PAYMENT
+  HELD_IN_ESCROW
+  RELEASED
+  REFUNDED
+  DISPUTED
+}
+
+enum NotificationType {
+  MESSAGE
+  OFFER
+  TASK_STATUS
+  PAYMENT
+  REVIEW
+  SECURITY
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  passwordHash      String
+  phone             String             @unique
+  role              UserRole           @default(BOTH)
+  name              String
+  age               Int?
+  bio               String?
+  avatarUrl         String?
+  contactInfo       Json?
+  isStudent         Boolean            @default(false)
+  latitude          Float?
+  longitude         Float?
+  ratingAverage     Float              @default(0)
+  ratingCount       Int                @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  verifications     Verification[]
+  postedTasks       Task[]             @relation("PostedTasks")
+  assignedTasks     Task[]             @relation("AssignedTasks")
+  offers            Offer[]
+  sentMessages      Message[]          @relation("SentMessages")
+  notifications     Notification[]
+  reviewsGiven      Review[]           @relation("ReviewsGiven")
+  reviewsReceived   Review[]           @relation("ReviewsReceived")
+  reportsMade       Report[]           @relation("ReportsMade")
+  reportsReceived   Report[]           @relation("ReportsReceived")
+  blockedUsers      Block[]            @relation("Blocker")
+  blockedByUsers    Block[]            @relation("Blocked")
+}
+
+model Verification {
+  id              String             @id @default(cuid())
+  userId          String
+  type            VerificationType
+  status          VerificationStatus @default(PENDING)
+  documentUrl     String?
+  providerRef     String?
+  rejectionReason String?
+  expiresAt       DateTime?
+  createdAt       DateTime           @default(now())
+  reviewedAt      DateTime?
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId, type, status])
+}
+
+model Task {
+  id             String      @id @default(cuid())
+  posterId       String
+  assignedDoerId String?
+  title          String
+  description    String
+  category       String
+  budgetCents    Int
+  finalPriceCents Int?
+  address        String
+  latitude       Float
+  longitude      Float
+  radiusKm       Int         @default(10)
+  status         TaskStatus  @default(OPEN)
+  dueAt          DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  poster         User        @relation("PostedTasks", fields: [posterId], references: [id])
+  assignedDoer   User?       @relation("AssignedTasks", fields: [assignedDoerId], references: [id])
+  offers         Offer[]
+  messages       Message[]
+  payments       Payment[]
+  reviews        Review[]
+
+  @@index([status, category])
+  @@index([latitude, longitude])
+}
+
+model Offer {
+  id          String      @id @default(cuid())
+  taskId      String
+  doerId      String
+  amountCents Int
+  note        String?
+  status      OfferStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  task        Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  doer        User        @relation(fields: [doerId], references: [id])
+
+  @@index([taskId, status])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  taskId    String
+  senderId  String
+  body      String
+  offerId   String?
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+
+  @@index([taskId, createdAt])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  taskId          String
+  payerId         String
+  payeeId         String
+  amountCents     Int
+  platformFeeCents Int
+  status          PaymentStatus @default(REQUIRES_PAYMENT)
+  providerIntentId String?
+  heldAt          DateTime?
+  releasedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  task            Task          @relation(fields: [taskId], references: [id])
+
+  @@index([taskId, status])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  taskId      String
+  reviewerId  String
+  revieweeId  String
+  rating      Int
+  positive    Boolean
+  body        String
+  createdAt   DateTime @default(now())
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reviewer    User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee    User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+
+  @@unique([taskId, reviewerId, revieweeId])
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  reporterId String
+  reportedId String
+  reason     String
+  details    String?
+  createdAt  DateTime @default(now())
+  reporter   User     @relation("ReportsMade", fields: [reporterId], references: [id])
+  reported   User     @relation("ReportsReceived", fields: [reportedId], references: [id])
+
+  @@index([reportedId, createdAt])
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id])
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id])
+
+  @@unique([blockerId, blockedId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+}
