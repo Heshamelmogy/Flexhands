@@ -1,0 +1,13 @@
+{
+  "name": "Flexhands",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bookworm",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Flexhands",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "updateContentCommand": "npm ci",
+  "postCreateCommand": "npm run build"
+}
