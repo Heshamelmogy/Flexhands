@@ -100,7 +100,6 @@ npm run dev
 Then open `http://localhost:3000`.
 
 ## Production Notes
-
 - Store verification documents in private object storage, never as public URLs.
 - Add malware scanning and signed upload URLs for document intake.
 - Use real-time transport for chat and notifications: WebSockets, Pusher, Ably, Supabase Realtime, or Socket.IO.
