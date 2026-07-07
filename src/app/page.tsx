@@ -113,15 +113,15 @@ type WorkspaceSnapshot = {
 };
 
 const seededOwners = [
-  { name: "Mina", email: "mina@verifiedhandy.local" },
-  { name: "Oskar", email: "oskar@verifiedhandy.local" },
-  { name: "Lea", email: "lea@verifiedhandy.local" }
+  { name: "Mina", email: "mina@flexhands.local" },
+  { name: "Oskar", email: "oskar@flexhands.local" },
+  { name: "Lea", email: "lea@flexhands.local" }
 ];
 
 const starterTasks: TaskItem[] = taskCards.map((task, index) => ({
   ...task,
   id: `task-${index + 1}`,
-  ownerEmail: seededOwners[index]?.email ?? "poster@verifiedhandy.local"
+  ownerEmail: seededOwners[index]?.email ?? "poster@flexhands.local"
 }));
 
 const mainNav: Array<{ id: Exclude<NavItem, "Profile">; label: string; icon: LucideIcon }> = [
@@ -133,7 +133,8 @@ const mainNav: Array<{ id: Exclude<NavItem, "Profile">; label: string; icon: Luc
   { id: "Account", label: "Account", icon: UserRound }
 ];
 
-const workspaceKey = (email: string) => `verified-handy.workspace.v3.${email}`;
+const workspaceKey = (email: string) => `flexhands.workspace.v3.${email}`;
+const legacyWorkspaceKey = (email: string) => `verified-handy.workspace.v3.${email}`;
 
 function accountToProfile(account: LocalAccount): UserProfile {
   return {
@@ -158,7 +159,7 @@ function initials(name: string) {
       .filter(Boolean)
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
-      .join("") || "VH"
+      .join("") || "FH"
   );
 }
 
@@ -220,7 +221,11 @@ function taskStatusForPayment(status: PaymentStatus) {
 
 function loadWorkspace(email: string): WorkspaceSnapshot | null {
   try {
-    const raw = window.localStorage.getItem(workspaceKey(email));
+    const key = workspaceKey(email);
+    const raw = window.localStorage.getItem(key) ?? window.localStorage.getItem(legacyWorkspaceKey(email));
+    if (raw && !window.localStorage.getItem(key)) {
+      window.localStorage.setItem(key, raw);
+    }
     return raw ? (JSON.parse(raw) as WorkspaceSnapshot) : null;
   } catch {
     return null;
@@ -354,6 +359,7 @@ export default function Home() {
     deleteConfirm: ""
   });
   const [accountNotice, setAccountNotice] = useState("");
+  const [accountNoticeTone, setAccountNoticeTone] = useState<"success" | "error">("success");
   const [reportDraft, setReportDraft] = useState("");
 
   const verificationComplete = verification.identity && verification.eligibility;
@@ -493,6 +499,7 @@ export default function Home() {
       deleteConfirm: ""
     });
     setAccountNotice("");
+    setAccountNoticeTone("success");
     setIsEditOpen(true);
   }
 
@@ -644,6 +651,7 @@ export default function Home() {
     event.preventDefault();
     if (!profile) return;
     setAccountNotice("");
+    setAccountNoticeTone("success");
     const profilePatch = {
       name: profileDraft.name.trim(),
       phone: profileDraft.phone.trim(),
@@ -659,12 +667,14 @@ export default function Home() {
     if (profileDraft.currentPassword || profileDraft.newPassword) {
       const result = await updateLocalAccountPassword(profile.email, profileDraft.currentPassword, profileDraft.newPassword);
       if (!result.ok) {
+        setAccountNoticeTone("error");
         setAccountNotice(result.error);
         return;
       }
     }
 
     setProfileDraft((draft) => ({ ...draft, currentPassword: "", newPassword: "" }));
+    setAccountNoticeTone("success");
     setAccountNotice("Profile saved.");
     setIsEditOpen(false);
   }
@@ -696,6 +706,7 @@ export default function Home() {
     if (!reportDraft.trim()) return;
     setAlerts((items) => [`Report submitted: ${reportDraft.trim()}`, ...items]);
     setReportDraft("");
+    setAccountNoticeTone("success");
     setAccountNotice("Thanks. Your report was saved in notifications for this prototype.");
   }
 
@@ -719,7 +730,7 @@ export default function Home() {
                 <ShieldCheck size={25} />
               </span>
               <div>
-                <p className="text-2xl font-bold text-ink">Verified Handy</p>
+                <p className="text-2xl font-bold text-ink">FlexHands</p>
                 <p className="text-sm text-slate-500">Trusted help nearby</p>
               </div>
             </div>
@@ -788,7 +799,7 @@ export default function Home() {
               <button type="submit" disabled={authPending} className="focus-ring rounded-md bg-trust px-4 py-3 font-bold text-white transition hover:bg-lagoon disabled:bg-slate-300">
                 {authPending ? "Please wait..." : authMode === "signup" ? "Create account" : "Sign in"}
               </button>
-              {authNotice ? <p className="rounded-md bg-mint px-3 py-2 text-sm font-semibold text-lagoon">{authNotice}</p> : null}
+              {authNotice ? <p className="rounded-md bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">{authNotice}</p> : null}
             </form>
           </section>
         </div>
@@ -814,7 +825,7 @@ export default function Home() {
             <ShieldCheck size={22} />
           </span>
           <span>
-            <span className="block text-lg font-bold">Verified Handy</span>
+            <span className="block text-lg font-bold">FlexHands</span>
             <span className="block text-xs text-white/60">Trusted local help</span>
           </span>
         </button>
@@ -866,7 +877,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <button onClick={() => navigate("Alerts")} className="focus-ring relative grid h-10 w-10 place-items-center rounded-md border border-slate-200 bg-white" aria-label="Notifications">
               <Bell size={18} />
-              {alerts.length ? <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-clay" /> : null}
+              {alerts.length ? <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-danger" /> : null}
             </button>
             <button onClick={() => setIsPostOpen(true)} className="focus-ring inline-flex items-center gap-2 rounded-md bg-lagoon px-3 py-2 text-sm font-bold text-white">
               <Plus size={17} /> <span className="hidden sm:inline">Post task</span>
@@ -1059,7 +1070,7 @@ export default function Home() {
               <form onSubmit={submitProfileReport} className="grid gap-3">
                 <textarea value={reportDraft} onChange={(event) => setReportDraft(event.target.value)} className="focus-ring min-h-24 rounded-md border border-slate-200 px-3 py-2" placeholder="Describe what is missing or broken" />
                 <button className="focus-ring w-fit rounded-md bg-trust px-3 py-2 text-sm font-bold text-white">Submit report</button>
-                {accountNotice ? <p className="text-sm font-semibold text-lagoon">{accountNotice}</p> : null}
+                {accountNotice ? <p className={`text-sm font-semibold ${accountNoticeTone === "error" ? "text-danger" : "text-lagoon"}`}>{accountNotice}</p> : null}
               </form>
             </Section>
           </div>
@@ -1172,7 +1183,7 @@ export default function Home() {
                         <div className="absolute right-0 z-10 mt-2 w-48 rounded-lg border border-slate-200 bg-white p-2 shadow-soft">
                           <button onClick={() => updateConversation(activeConversation.id, { blocked: !activeConversation.blocked })} className="focus-ring flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50"><Ban size={15} /> {activeConversation.blocked ? "Unblock" : "Block"}</button>
                           <button onClick={() => updateConversation(activeConversation.id, { reported: true })} className="focus-ring flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50"><Flag size={15} /> Report</button>
-                          <button onClick={() => deleteConversation(activeConversation.id)} className="focus-ring flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold text-clay hover:bg-slate-50"><Trash2 size={15} /> Delete</button>
+                          <button onClick={() => deleteConversation(activeConversation.id)} className="focus-ring flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold text-danger hover:bg-slate-50"><Trash2 size={15} /> Delete</button>
                         </div>
                       </details>
                     </div>
@@ -1254,7 +1265,7 @@ export default function Home() {
                 <div className="divide-y divide-slate-100">
                   {alerts.map((alert) => (
                     <button key={alert} onClick={() => setAlerts((items) => items.filter((item) => item !== alert))} className="focus-ring flex w-full items-center gap-3 px-2 py-4 text-left hover:bg-slate-50">
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-clay" />
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-danger" />
                       <span className="flex-1 text-sm font-medium text-slate-700">{alert}</span>
                       <CheckCircle2 size={17} className="text-slate-400" />
                     </button>
@@ -1354,16 +1365,16 @@ export default function Home() {
                 <input type="password" value={profileDraft.currentPassword} onChange={(event) => setProfileDraft((draft) => ({ ...draft, currentPassword: event.target.value }))} className="focus-ring rounded-md border border-slate-200 px-3 py-2" placeholder="Current password" />
                 <input type="password" value={profileDraft.newPassword} onChange={(event) => setProfileDraft((draft) => ({ ...draft, newPassword: event.target.value }))} className="focus-ring rounded-md border border-slate-200 px-3 py-2" placeholder="New password" />
               </div>
-              {accountNotice ? <p className="rounded-md bg-mint px-3 py-2 text-sm font-semibold text-lagoon">{accountNotice}</p> : null}
+              {accountNotice ? <p className={`rounded-md px-3 py-2 text-sm font-semibold ${accountNoticeTone === "error" ? "bg-danger/10 text-danger" : "bg-mint text-lagoon"}`}>{accountNotice}</p> : null}
               <button className="focus-ring rounded-md bg-trust px-4 py-3 font-bold text-white">Save changes</button>
             </form>
-            <div className="mt-4 grid gap-3 rounded-lg border border-clay/30 bg-clay/5 p-3">
+            <div className="mt-4 grid gap-3 rounded-lg border border-danger/30 bg-danger/5 p-3">
               <div>
                 <p className="font-bold text-ink">Delete account</p>
                 <p className="text-sm text-slate-600">This removes your local account and saved workspace on this device.</p>
               </div>
               <input value={profileDraft.deleteConfirm} onChange={(event) => setProfileDraft((draft) => ({ ...draft, deleteConfirm: event.target.value }))} className="focus-ring rounded-md border border-slate-200 px-3 py-2" placeholder="Type DELETE to confirm" />
-              <button type="button" disabled={profileDraft.deleteConfirm !== "DELETE"} onClick={deleteMyAccount} className="focus-ring w-fit rounded-md bg-clay px-3 py-2 text-sm font-bold text-white disabled:bg-slate-300">
+              <button type="button" disabled={profileDraft.deleteConfirm !== "DELETE"} onClick={deleteMyAccount} className="focus-ring w-fit rounded-md bg-danger px-3 py-2 text-sm font-bold text-white disabled:bg-slate-300">
                 Delete account
               </button>
             </div>

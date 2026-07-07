@@ -10,7 +10,7 @@ const config: Config = {
         lagoon: "#14746f",
         mint: "#e9f6f1",
         amber: "#f2b66d",
-        clay: "#c96b4c",
+        danger: "#dc2626",
         paper: "#f7f8f6"
       },
       boxShadow: {
