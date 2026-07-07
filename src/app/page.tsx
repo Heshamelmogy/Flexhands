@@ -172,10 +172,11 @@ function Avatar({
 }: {
   name: string;
   photoUrl?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }) {
   const sizes = {
+    xs: "h-7 w-7 text-[10px]",
     sm: "h-10 w-10 text-sm",
     md: "h-12 w-12 text-base",
     lg: "h-20 w-20 text-2xl"
@@ -925,14 +926,14 @@ export default function Home() {
 
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
-            <Avatar name={profile.name} photoUrl={profile.photoUrl} size="sm" className="lg:hidden" />
-            <div>
-              <p className="font-bold text-ink">{pageTitles[activeNav]}</p>
-              <p className="text-xs text-slate-500">{profile.name}</p>
+          <div className="min-w-0">
+            <p className="truncate font-bold text-ink">{pageTitles[activeNav]}</p>
+            <div className="mt-1 flex min-w-0 items-center gap-2">
+              <Avatar name={profile.name} photoUrl={profile.photoUrl} size="xs" />
+              <p className="truncate text-xs font-semibold text-slate-500">{profile.name}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button onClick={() => navigate("Alerts")} className="focus-ring relative grid h-10 w-10 place-items-center rounded-md border border-slate-200 bg-white" aria-label="Notifications">
               <Bell size={18} />
               {alerts.length ? <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-danger" /> : null}
@@ -947,7 +948,7 @@ export default function Home() {
       <main className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:px-6 lg:pb-8">
         {activeNav === "Dashboard" ? (
           <div className="space-y-6">
-            <PageHeader title={`Welcome, ${profile.name.split(" ")[0]}`} subtitle="Here is what needs your attention." />
+            <PageHeader title={`Welcome, ${profile.name.split(" ")[0]}`} subtitle="Here is what needs your attention." action={<Avatar name={profile.name} photoUrl={profile.photoUrl} size="sm" />} />
             <div className="grid gap-3 sm:grid-cols-3">
               <Stat icon={BriefcaseBusiness} label="My tasks" value={String(postedByMe)} tone="trust" />
               <Stat icon={WalletCards} label="In escrow" value={`EUR ${heldTotal}`} tone="lagoon" />
