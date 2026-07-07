@@ -134,7 +134,6 @@ const mainNav: Array<{ id: Exclude<NavItem, "Profile">; label: string; icon: Luc
 ];
 
 const workspaceKey = (email: string) => `flexhands.workspace.v3.${email}`;
-const legacyWorkspaceKey = (email: string) => `verified-handy.workspace.v3.${email}`;
 
 function accountToProfile(account: LocalAccount): UserProfile {
   return {
@@ -221,11 +220,7 @@ function taskStatusForPayment(status: PaymentStatus) {
 
 function loadWorkspace(email: string): WorkspaceSnapshot | null {
   try {
-    const key = workspaceKey(email);
-    const raw = window.localStorage.getItem(key) ?? window.localStorage.getItem(legacyWorkspaceKey(email));
-    if (raw && !window.localStorage.getItem(key)) {
-      window.localStorage.setItem(key, raw);
-    }
+    const raw = window.localStorage.getItem(workspaceKey(email));
     return raw ? (JSON.parse(raw) as WorkspaceSnapshot) : null;
   } catch {
     return null;
@@ -739,7 +734,7 @@ export default function Home() {
               Find trusted local help or earn money completing nearby tasks.
             </p>
             <div className="mt-8 grid max-w-lg gap-3 sm:grid-cols-3">
-              {["Verified users", "Secure payments", "Local tasks"].map((item, index) => (
+              {["Checked users", "Secure payments", "Local tasks"].map((item, index) => (
                 <div key={item} className="rounded-lg border border-slate-200 bg-white p-3">
                   <span className="grid h-8 w-8 place-items-center rounded-md bg-mint text-sm font-bold text-lagoon">{index + 1}</span>
                   <p className="mt-3 text-sm font-semibold text-ink">{item}</p>
@@ -853,7 +848,7 @@ export default function Home() {
             <span className="grid h-10 w-10 place-items-center rounded-lg bg-white text-sm font-bold text-trust">{initials(profile.name)}</span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold">{profile.name}</span>
-              <span className="block truncate text-xs text-white/60">{verificationComplete ? "Verified" : "Verification pending"}</span>
+              <span className="block truncate text-xs text-white/60">{verificationComplete ? "Approved" : "Verification pending"}</span>
             </span>
             <ChevronRight size={16} />
           </button>
@@ -1016,7 +1011,7 @@ export default function Home() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-bold text-ink">{profile.name}</h2>
-                    <StatusBadge tone={verificationComplete ? "good" : "warn"}>{verificationComplete ? "Documents verified" : "Documents pending"}</StatusBadge>
+                    <StatusBadge tone={verificationComplete ? "good" : "warn"}>{verificationComplete ? "Documents approved" : "Documents pending"}</StatusBadge>
                   </div>
                   <p className="mt-1 text-sm text-slate-600">{profile.role} account</p>
                   <p className="mt-1 text-sm text-slate-500">{profile.dateOfBirth ? `Born ${profile.dateOfBirth}` : "Date of birth not added"}</p>
@@ -1093,7 +1088,7 @@ export default function Home() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-bold text-ink">{selectedName}</h2>
-                    <StatusBadge tone={verificationComplete ? "good" : "warn"}>{verificationComplete ? "Documents verified" : "Documents pending"}</StatusBadge>
+                    <StatusBadge tone={verificationComplete ? "good" : "warn"}>{verificationComplete ? "Documents approved" : "Documents pending"}</StatusBadge>
                   </div>
                   <p className="mt-1 flex items-center gap-1 text-sm text-slate-600">
                     <Star size={16} className="fill-amber text-amber" /> {selectedRating ? selectedRating.toFixed(1) : "No rating yet"}

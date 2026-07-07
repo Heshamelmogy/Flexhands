@@ -1,6 +1,6 @@
 # FlexHands
 
-A modern full-stack starter for a verified local handyman and daily micro-task marketplace. It is shaped like TaskRabbit, with local task discovery, identity and eligibility document checks, blocking/reporting, escrow-style payment states, profile settings, and double-sided reviews.
+A modern full-stack starter for a trusted local handyman and daily micro-task marketplace. It is shaped like TaskRabbit, with local task discovery, identity and eligibility document checks, blocking/reporting, escrow-style payment states, profile settings, and double-sided reviews.
 
 ## Stack
 

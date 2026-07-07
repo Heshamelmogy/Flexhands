@@ -33,7 +33,6 @@ type RegisterInput = {
 };
 
 const ACCOUNTS_KEY = "flexhands.accounts.v1";
-const LEGACY_ACCOUNTS_KEY = "verified-handy.accounts.v1";
 const HASH_ITERATIONS = 120000;
 
 function normalizeEmail(email: string) {
@@ -44,10 +43,7 @@ function readAccounts(): LocalAccount[] {
   if (typeof window === "undefined") return [];
 
   try {
-    const raw = window.localStorage.getItem(ACCOUNTS_KEY) ?? window.localStorage.getItem(LEGACY_ACCOUNTS_KEY);
-    if (raw && !window.localStorage.getItem(ACCOUNTS_KEY)) {
-      window.localStorage.setItem(ACCOUNTS_KEY, raw);
-    }
+    const raw = window.localStorage.getItem(ACCOUNTS_KEY);
     return raw ? (JSON.parse(raw) as LocalAccount[]) : [];
   } catch {
     return [];

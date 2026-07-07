@@ -27,7 +27,7 @@ export const taskCards = [
     location: "Prenzlauer Berg",
     distance: "7.5 km",
     price: "EUR 58",
-    status: "Verified poster",
+    status: "Checked poster",
     urgency: "Flexible",
     requester: "Lea",
     rating: "5.0"

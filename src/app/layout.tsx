@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FlexHands",
-  description: "Verified local handyman and daily micro-task marketplace."
+  description: "Trusted local handyman and daily micro-task marketplace."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
