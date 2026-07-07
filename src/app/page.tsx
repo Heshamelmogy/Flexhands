@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Ban,
@@ -49,6 +49,7 @@ type UserProfile = {
   name: string;
   email: string;
   phone: string;
+  photoUrl?: string;
   role: LocalUserRole;
   isStudent: boolean;
   dateOfBirth?: string;
@@ -141,6 +142,7 @@ function accountToProfile(account: LocalAccount): UserProfile {
     name: account.name,
     email: account.email,
     phone: account.phone,
+    photoUrl: account.photoUrl ?? "",
     role: account.role,
     isStudent: account.isStudent,
     dateOfBirth: account.dateOfBirth ?? "",
@@ -159,6 +161,33 @@ function initials(name: string) {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
       .join("") || "FH"
+  );
+}
+
+function Avatar({
+  name,
+  photoUrl,
+  size = "md",
+  className = ""
+}: {
+  name: string;
+  photoUrl?: string;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}) {
+  const sizes = {
+    sm: "h-10 w-10 text-sm",
+    md: "h-12 w-12 text-base",
+    lg: "h-20 w-20 text-2xl"
+  };
+
+  return (
+    <span
+      aria-label={`${name} profile photo`}
+      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-lg bg-mint font-bold text-lagoon ${sizes[size]} ${className}`}
+    >
+      {photoUrl ? <span className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${photoUrl})` }} /> : initials(name)}
+    </span>
   );
 }
 
@@ -346,6 +375,7 @@ export default function Home() {
   const [profileDraft, setProfileDraft] = useState({
     name: "",
     phone: "",
+    photoUrl: "",
     dateOfBirth: "",
     role: "Both" as LocalUserRole,
     isStudent: false,
@@ -387,6 +417,7 @@ export default function Home() {
     selectedProfileEmail === profile?.email
       ? profile.name
       : selectedTask?.requester ?? selectedConversation?.participantName ?? "User";
+  const selectedPhotoUrl = selectedProfileEmail === profile?.email ? profile.photoUrl : "";
   const selectedTasks = selectedProfileEmail ? tasks.filter((task) => task.ownerEmail === selectedProfileEmail) : [];
   const selectedConversations = selectedProfileEmail
     ? conversations.filter((conversation) => conversation.participantEmail === selectedProfileEmail)
@@ -451,6 +482,7 @@ export default function Home() {
       setProfileDraft({
         name: user.name,
         phone: user.phone,
+        photoUrl: user.photoUrl ?? "",
         dateOfBirth: user.dateOfBirth ?? "",
         role: user.role,
         isStudent: user.isStudent,
@@ -486,6 +518,7 @@ export default function Home() {
     setProfileDraft({
       name: profile.name,
       phone: profile.phone,
+      photoUrl: profile.photoUrl ?? "",
       dateOfBirth: profile.dateOfBirth ?? "",
       role: profile.role,
       isStudent: profile.isStudent,
@@ -642,6 +675,36 @@ export default function Home() {
     setAlerts((items) => [`${payment.taskTitle}: ${paymentLabel(status)}`, ...items]);
   }
 
+  function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setAccountNoticeTone("error");
+      setAccountNotice("Choose an image file for your profile photo.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setAccountNoticeTone("error");
+      setAccountNotice("Choose a profile photo under 2 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      setProfileDraft((draft) => ({ ...draft, photoUrl: reader.result as string }));
+      setAccountNotice("");
+      setAccountNoticeTone("success");
+    };
+    reader.onerror = () => {
+      setAccountNoticeTone("error");
+      setAccountNotice("Could not read that image. Try another photo.");
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!profile) return;
@@ -650,6 +713,7 @@ export default function Home() {
     const profilePatch = {
       name: profileDraft.name.trim(),
       phone: profileDraft.phone.trim(),
+      photoUrl: profileDraft.photoUrl,
       dateOfBirth: profileDraft.dateOfBirth,
       role: profileDraft.role,
       isStudent: profileDraft.isStudent
@@ -684,6 +748,7 @@ export default function Home() {
     setProfileDraft({
       name: "",
       phone: "",
+      photoUrl: "",
       dateOfBirth: "",
       role: "Both",
       isStudent: false,
@@ -845,7 +910,7 @@ export default function Home() {
         </nav>
         <div className="mt-auto rounded-lg bg-white/10 p-3">
           <button onClick={() => navigate("Account")} className="flex w-full items-center gap-3 text-left">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-white text-sm font-bold text-trust">{initials(profile.name)}</span>
+            <Avatar name={profile.name} photoUrl={profile.photoUrl} size="sm" className="bg-white text-trust" />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold">{profile.name}</span>
               <span className="block truncate text-xs text-white/60">{verificationComplete ? "Approved" : "Verification pending"}</span>
@@ -861,9 +926,7 @@ export default function Home() {
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-trust text-white lg:hidden">
-              <ShieldCheck size={21} />
-            </span>
+            <Avatar name={profile.name} photoUrl={profile.photoUrl} size="sm" className="lg:hidden" />
             <div>
               <p className="font-bold text-ink">{pageTitles[activeNav]}</p>
               <p className="text-xs text-slate-500">{profile.name}</p>
@@ -1007,7 +1070,7 @@ export default function Home() {
             />
             <Section>
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                <div className="grid h-20 w-20 place-items-center rounded-lg bg-mint text-2xl font-bold text-lagoon">{initials(profile.name)}</div>
+                <Avatar name={profile.name} photoUrl={profile.photoUrl} size="lg" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-bold text-ink">{profile.name}</h2>
@@ -1084,7 +1147,7 @@ export default function Home() {
             />
             <Section>
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                <div className="grid h-20 w-20 place-items-center rounded-lg bg-mint text-2xl font-bold text-lagoon">{initials(selectedName)}</div>
+                <Avatar name={selectedName} photoUrl={selectedPhotoUrl} size="lg" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-bold text-ink">{selectedName}</h2>
@@ -1340,6 +1403,28 @@ export default function Home() {
               <button onClick={() => setIsEditOpen(false)} className="focus-ring rounded-md border border-slate-200 px-3 py-2 text-sm font-bold">Close</button>
             </div>
             <form onSubmit={saveProfile} className="mt-4 grid gap-3">
+              <div className="flex items-center gap-4 rounded-lg border border-slate-200 p-3">
+                <Avatar name={profileDraft.name || profile?.name || "User"} photoUrl={profileDraft.photoUrl} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-ink">Profile photo</p>
+                  <p className="text-sm text-slate-500">JPG, PNG, or WebP under 2 MB.</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <label className="focus-ring cursor-pointer rounded-md bg-trust px-3 py-2 text-sm font-bold text-white">
+                      Upload photo
+                      <input type="file" accept="image/*" className="sr-only" onChange={handlePhotoUpload} />
+                    </label>
+                    {profileDraft.photoUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setProfileDraft((draft) => ({ ...draft, photoUrl: "" }))}
+                        className="focus-ring rounded-md border border-danger/30 px-3 py-2 text-sm font-bold text-danger"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
               <input required value={profileDraft.name} onChange={(event) => setProfileDraft((draft) => ({ ...draft, name: event.target.value }))} className="focus-ring rounded-md border border-slate-200 px-3 py-2" placeholder="Name" />
               <input required value={profileDraft.phone} onChange={(event) => setProfileDraft((draft) => ({ ...draft, phone: event.target.value }))} className="focus-ring rounded-md border border-slate-200 px-3 py-2" placeholder="Phone" />
               <label className="grid gap-1 text-sm font-semibold text-slate-700">

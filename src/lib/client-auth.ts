@@ -5,6 +5,7 @@ export type LocalAccount = {
   name: string;
   email: string;
   phone: string;
+  photoUrl?: string;
   role: LocalUserRole;
   isStudent: boolean;
   dateOfBirth?: string;
@@ -100,6 +101,7 @@ export async function registerLocalAccount(input: RegisterInput) {
     name: input.name.trim(),
     email,
     phone: input.phone.trim(),
+    photoUrl: "",
     role: input.role,
     isStudent: input.isStudent,
     documents: { identity: "", eligibility: "" },
@@ -131,7 +133,7 @@ export async function verifyLocalLogin(emailInput: string, password: string) {
   return { ok: true as const, account };
 }
 
-export function updateLocalAccountProfile(emailInput: string, patch: Partial<Pick<LocalAccount, "name" | "phone" | "role" | "isStudent" | "dateOfBirth" | "documents" | "verification" | "ratingAverage" | "ratingCount">>) {
+export function updateLocalAccountProfile(emailInput: string, patch: Partial<Pick<LocalAccount, "name" | "phone" | "photoUrl" | "role" | "isStudent" | "dateOfBirth" | "documents" | "verification" | "ratingAverage" | "ratingCount">>) {
   const email = normalizeEmail(emailInput);
   const accounts = readAccounts();
   const account = accounts.find((item) => item.email === email);
