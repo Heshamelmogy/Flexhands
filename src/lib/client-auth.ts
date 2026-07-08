@@ -55,6 +55,11 @@ function writeAccounts(accounts: LocalAccount[]) {
   window.localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
 }
 
+export function getLocalAccount(emailInput: string) {
+  const email = normalizeEmail(emailInput);
+  return readAccounts().find((account) => account.email === email) ?? null;
+}
+
 function randomToken(length = 24) {
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);

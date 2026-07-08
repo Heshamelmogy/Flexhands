@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import {
   deleteLocalAccount,
+  getLocalAccount,
   registerLocalAccount,
   updateLocalAccountPassword,
   updateLocalAccountProfile,
@@ -135,6 +136,7 @@ const mainNav: Array<{ id: Exclude<NavItem, "Profile">; label: string; icon: Luc
 ];
 
 const workspaceKey = (email: string) => `flexhands.workspace.v3.${email}`;
+const sessionKey = "flexhands.session.email";
 
 function accountToProfile(account: LocalAccount): UserProfile {
   return {
@@ -337,6 +339,7 @@ function StatusBadge({ children, tone = "neutral" }: { children: React.ReactNode
 
 export default function Home() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
   const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
   const [showPassword, setShowPassword] = useState(false);
   const [authPending, setAuthPending] = useState(false);
@@ -431,10 +434,19 @@ export default function Home() {
         ? selectedReviews.reduce((total, conversation) => total + (conversation.rating ?? 0), 0) / selectedReviews.length
         : Number(selectedTask?.rating) || 0;
 
-  useEffect(() => {
-    if (!profile || workspaceLoadedFor !== profile.email) return;
-    saveWorkspace(profile.email, { tasks, alerts, payments, conversations, documents, verification });
-  }, [profile, workspaceLoadedFor, tasks, alerts, payments, conversations, documents, verification]);
+  function profileDraftFromUser(user: UserProfile) {
+    return {
+      name: user.name,
+      phone: user.phone,
+      photoUrl: user.photoUrl ?? "",
+      dateOfBirth: user.dateOfBirth ?? "",
+      role: user.role,
+      isStudent: user.isStudent,
+      currentPassword: "",
+      newPassword: "",
+      deleteConfirm: ""
+    };
+  }
 
   function hydrateWorkspace(user: UserProfile) {
     const saved = loadWorkspace(user.email);
@@ -447,6 +459,35 @@ export default function Home() {
     setActiveConversationId(saved?.conversations?.[0]?.id ?? "");
     setWorkspaceLoadedFor(user.email);
   }
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      const savedEmail = window.localStorage.getItem(sessionKey);
+      if (!savedEmail) {
+        setSessionReady(true);
+        return;
+      }
+
+      const account = getLocalAccount(savedEmail);
+      if (!account) {
+        window.localStorage.removeItem(sessionKey);
+        setSessionReady(true);
+        return;
+      }
+
+      const user = accountToProfile(account);
+      hydrateWorkspace(user);
+      setProfile(user);
+      setProfileDraft(profileDraftFromUser(user));
+      setActiveNav("Dashboard");
+      setSessionReady(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!profile || workspaceLoadedFor !== profile.email) return;
+    saveWorkspace(profile.email, { tasks, alerts, payments, conversations, documents, verification });
+  }, [profile, workspaceLoadedFor, tasks, alerts, payments, conversations, documents, verification]);
 
   function navigate(item: NavItem) {
     if (activeNav !== "Profile") setPreviousNav(activeNav);
@@ -480,17 +521,8 @@ export default function Home() {
       const user = accountToProfile(result.account);
       hydrateWorkspace(user);
       setProfile(user);
-      setProfileDraft({
-        name: user.name,
-        phone: user.phone,
-        photoUrl: user.photoUrl ?? "",
-        dateOfBirth: user.dateOfBirth ?? "",
-        role: user.role,
-        isStudent: user.isStudent,
-        currentPassword: "",
-        newPassword: "",
-        deleteConfirm: ""
-      });
+      setProfileDraft(profileDraftFromUser(user));
+      window.localStorage.setItem(sessionKey, user.email);
       setActiveNav("Dashboard");
     } finally {
       setAuthPending(false);
@@ -500,6 +532,7 @@ export default function Home() {
   function logout() {
     setProfile(null);
     setWorkspaceLoadedFor("");
+    window.localStorage.removeItem(sessionKey);
     setAuthForm((form) => ({ ...form, password: "" }));
     setActiveNav("Dashboard");
   }
@@ -516,17 +549,7 @@ export default function Home() {
 
   function openAccountSettings() {
     if (!profile) return;
-    setProfileDraft({
-      name: profile.name,
-      phone: profile.phone,
-      photoUrl: profile.photoUrl ?? "",
-      dateOfBirth: profile.dateOfBirth ?? "",
-      role: profile.role,
-      isStudent: profile.isStudent,
-      currentPassword: "",
-      newPassword: "",
-      deleteConfirm: ""
-    });
+    setProfileDraft(profileDraftFromUser(profile));
     setAccountNotice("");
     setAccountNoticeTone("success");
     setIsEditOpen(true);
@@ -742,6 +765,7 @@ export default function Home() {
   function deleteMyAccount() {
     if (!profile || profileDraft.deleteConfirm !== "DELETE") return;
     deleteLocalAccount(profile.email);
+    window.localStorage.removeItem(sessionKey);
     window.localStorage.removeItem(workspaceKey(profile.email));
     setProfile(null);
     setWorkspaceLoadedFor("");
@@ -779,6 +803,22 @@ export default function Home() {
     setVerification(nextVerification);
     setProfile((user) => (user ? { ...user, documents: nextDocuments, verification: nextVerification } : user));
     updateLocalAccountProfile(profile.email, { documents: nextDocuments, verification: nextVerification });
+  }
+
+  if (!sessionReady) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-paper px-4">
+        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-soft">
+          <span className="grid h-10 w-10 place-items-center rounded-lg bg-trust text-white">
+            <ShieldCheck size={21} />
+          </span>
+          <div>
+            <p className="font-bold text-ink">FlexHands</p>
+            <p className="text-sm text-slate-500">Opening your account...</p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (!profile) {
