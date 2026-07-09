@@ -3,10 +3,6 @@
 FlexHands is a web app for local handyman jobs and daily micro-tasks. Clients can post small tasks, and task doers can browse nearby work, view profiles, send offers, chat, and manage simple escrow-style payments.
 
 ## Main Features
-
-- Sign up and log in with email and password
-- Stay logged in after refreshing the page
-- User profile with name, phone, role, student status, date of birth, and profile photo
 - Document upload flow for identity and work/student eligibility
 - Browse tasks by category, search text, and distance
 - View a user's profile before sending an offer
