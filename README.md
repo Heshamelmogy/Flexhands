@@ -99,13 +99,12 @@ npm run dev
 
 Then open `http://localhost:3000`.
 
-## Production Notes
-- Store verification documents in private object storage, never as public URLs.
-- Add malware scanning and signed upload URLs for document intake.
-- Use real-time transport for chat and notifications: WebSockets, Pusher, Ably, Supabase Realtime, or Socket.IO.
-- Add push subscriptions for web push and mobile PWA notifications.
-- Add moderation queues for reports and verification review.
-- Use provider webhooks to make payment status authoritative.
-- Add rate limiting to login, messaging, reports, and offer endpoints.
-- Use geospatial indexes such as PostGIS for large-scale radius queries.
-- Add audit logs for identity, payment, moderation, and admin actions.
+
+## GitHub Codespace Setup
+To start the development server in GitHub Codespaces, run:
+
+```bash
+npm run dev
+```
+
+The application will start, and you can open it using the forwarded port in Codespaces.
