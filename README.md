@@ -22,7 +22,10 @@ FlexHands is a web app for local handyman jobs and daily micro-tasks. Clients ca
 
 ## How To Run
 
-Open the project in VS Code, then run:
+To run GitHub code space just run this command
+npm run dev
+
+Or open the project in VS Code, then run:
 
 ```bash
 npm install
