@@ -18,7 +18,7 @@ FlexHands is a web app for local handyman jobs and daily micro-tasks. Clients ca
 - **Backend:** Next.js API routes
 - **Database Plan:** PostgreSQL with Prisma
 - **Validation/Auth Helpers:** Zod, bcryptjs, JSON Web Token helpers
-- **Current Demo Storage:** Browser localStorage for accounts, sessions, profile photos, tasks, messages, and payments
+- **Current Demo Storage:** Browser localStorage for accounts, sessions, profile photos, tasks, messages, and payments.
 
 ## How To Run
 
