@@ -1,6 +1,6 @@
 # FlexHands
 
-FlexHands is a web app for local handyman jobs and daily micro-tasks. Clients can post small tasks, and task doers can browse nearby work, view profiles, send offers, chat, and manage simple escrow-style payments.
+FlexHands is a web app for local handyman jobs and daily micro-tasks, developed by Anubis Team. Clients can post small tasks, and task doers can browse nearby work, view profiles, send offers, chat, and manage simple escrow-style payments.
 
 ## Main Features
 - Document upload flow for identity and work/student eligibility
