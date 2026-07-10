@@ -56,8 +56,4 @@ src/app/api                  Backend API route starters
 prisma/schema.prisma          Database schema plan
 ```
 
-## Notes
 
-This project is currently a working demo/starter version. Some features use local browser storage so the app can run easily without a deployed database or paid services.
-
-For a real production launch, the next steps would be connecting real SMS OTP, secure document storage, a real payment provider, real-time chat, and a hosted PostgreSQL database.
